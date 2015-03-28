@@ -13,11 +13,16 @@ ApplicationWindow {
     visible: true
     color: "black";
 
-    Rectangle{
+    Rectangle {
+        id: rectangle;
         width: parent.width > parent.height ? parent.height : parent.width;
         height: width;
         x: (parent.width / 2.0) - (width / 2.0);
         y: (parent.height / 2.0) - (height / 2.0);
+
+        property real zoom: shader.scale;
+        property real centerX: shader.center.x;
+        property real centerY: shader.center.y;
 
 		Camera {
 			id: camera;
@@ -26,7 +31,6 @@ ApplicationWindow {
 				focusPointMode: Camera.FocusPointCenter;
 			}
 		}
-
 
 		VideoOutput {
 			id: viewfinder
@@ -39,12 +43,24 @@ ApplicationWindow {
 			source: "fractal_coloring.png"
 		}
 
+        PinchArea {
+            anchors.fill: parent;
+            onPinchUpdated: {
+                shader.center.x = rectangle.centerX + ((pinch.center.x - pinch.previousCenter.x)/shader.width);
+                shader.center.y = rectangle.centerY + ((pinch.center.y - pinch.previousCenter.y)/shader.height);
+                shader.scale = (pinch.previousScale / pinch.scale) * rectangle.zoom;
+                rectangle.centerX = shader.center.x;
+                rectangle.centerY = shader.center.y;
+                rectangle.zoom = shader.scale;
+            }
+        }
+
 		ShaderEffect {
 			id: shader
 			//property variant source: ShaderEffectSource { sourceItem: viewfinder; hideSource: true; }
             property variant tex: ShaderEffectSource { sourceItem: coloring; hideSource: true; }
 			anchors.fill: parent;
-			property point center: Qt.point(0.5, 0.0);
+            property point center: Qt.point(0.5, 0.0);
 			property real scale: 2.0
 			property real ratio: Screen.width / Screen.height;
             property int iter: 100
